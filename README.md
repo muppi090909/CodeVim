@@ -25,7 +25,7 @@ Install instuctions:  <br>
         other installation method please refer to the vim-plug README. <br>
         ```sh <br>
         sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
-       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim' <br>
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
         ``` <br>
     Step 4 <br>
         open neovim *ignore the many errors. You can press q to clear all*. <br>
