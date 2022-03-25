@@ -15,7 +15,7 @@ Install instuctions:  <br>
     Step 2 <br>
         clone the repo  <br>
         ```sh <br>
-        git clone https://github.com/muppi090909/CodeVim.git -C ~/.config/ && mv ~/.config/CodeVim ~/.config/nvim <br>
+        git clone https://github.com/muppi090909/CodeVim.git -C ~/.config/ && mv ~/.config/CodeVim ~/.config/nvim
         ``` <br>
         *NOTE: this will rename the folder to nvim and wipe out all the <br>
         previous nvim data* <br>
@@ -24,7 +24,7 @@ Install instuctions:  <br>
         generally this command if you did a normal install but if you used any <br>
         other installation method please refer to the vim-plug README. <br>
         ```sh <br>
-        sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \ <br>
+        sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim' <br>
         ``` <br>
     Step 4 <br>
