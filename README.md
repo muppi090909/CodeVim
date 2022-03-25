@@ -1,2 +1,2 @@
 # CodeVim
-A ```NeoVim``` config made for code editing
+A [NeoVim](https://github.com/neovim/neovim) config made for code editing
