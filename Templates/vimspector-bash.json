@@ -1,0 +1,11 @@
+{
+  "configurations": {
+    "run": {
+        "adapter": "vscode-bash",
+        "configuration": {
+            "program": "${file}"
+        }
+    }
+  }
+}
+
