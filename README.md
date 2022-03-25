@@ -15,7 +15,7 @@ Install instuctions:  <br>
     Step 2 <br>
         clone the repo  <br>
         ```sh <br>
-        git clone https://github.com/muppi090909/CodeVim.git -C ~/.config/ && mv ~/.config/CodeVim ~/.config/nvim
+        git clone https://github.com/muppi090909/CodeVim.git -C ~/.config/ && mv ~/.config/CodeVim ~/.config/nvim --recursive
         ``` <br>
         *NOTE: this will rename the folder to nvim and wipe out all the <br>
         previous nvim data* <br>
