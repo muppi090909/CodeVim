@@ -79,18 +79,24 @@ Plug 'wookayin/fzf-ripgrep.vim'
 Plug 'nvim-lua/popup.nvim'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim'
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
 Plug 'tpope/vim-fugitive'
 Plug 'simrat39/symbols-outline.nvim'
 Plug 'tpope/vim-commentary'
 Plug 'ryanoasis/vim-devicons'
+Plug 'mileszs/ack.vim'
 Plug 'machakann/vim-highlightedyank'
-Plug 'purofle/vim-mindustry-logic'
+Plug 'jiangmiao/auto-pairs'
 Plug 'morhetz/gruvbox'
 Plug 'mattn/emmet-vim'
 Plug 'frazrepo/vim-rainbow'
 Plug 'luukvbaal/nnn.nvim'
 Plug 'chentau/marks.nvim'
 Plug 'tpope/vim-repeat'
+" orgmode
+Plug 'jceb/vim-orgmode'
+Plug 'vim-scripts/utl.vim'
+Plug 'mattn/calendar-vim'
 "code runner
 Plug 'xianzhon/vim-code-runner'
 
@@ -259,7 +265,6 @@ vim.g.symbols_outline = {
 }
 EOF
 syntax enable
-set autoindent
 set smartindent
 set modifiable
 set nowrap
@@ -366,7 +371,6 @@ require'nvim-treesitter.configs'.setup {
     enable = true,
     custom_captures = {
       -- Highlight the @foo.bar capture group with the "Identifier" highlight group.
-      ["foo.bar"] = "Identifier",
     },
     -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
     -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
@@ -392,7 +396,7 @@ EOF
 lua << EOF
 require'nvim-treesitter.configs'.setup {
   indent = {
-    enable = true
+    enable = false
   }
 }
 EOF
@@ -434,7 +438,6 @@ au BufRead,BufNewFile *.g4 setfiletype antlr4
 au BufRead,BufNewFile *.lisp setfiletype lisp
 nohl
 set mouse=niv
-let g:autopep8_disable_show_diff=1
 set nocompatible
 nmap <silent><leader>l <plug>CodeRunner
 let g:CodeRunnerCommandMap = {
@@ -498,9 +501,26 @@ cnoreabbrev debug_map h vimspector-visual-studio-vscode
 " emmet
 au FileType html,css EmmetInstall
 let g:user_emmet_leader_key=','
-" fzf
+" searcher
+lua << EOF
+require('telescope').setup {
+  extensions = {
+    fzf = {
+      fuzzy = true,                    -- false will only do exact matching
+      override_generic_sorter = true,  -- override the generic sorter
+      override_file_sorter = true,     -- override the file sorter
+      case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
+                                       -- the default case_mode is "smart_case"
+    }
+  }
+}
+-- To get fzf loaded and working with telescope, you need to call
+-- load_extension, somewhere after setup function:
+require('telescope').load_extension('fzf')
+EOF
 nnoremap <silent> <Leader>b :Buffers<CR>
 nnoremap <silent> <C-f> :Files<CR>
+nmap <silent> <Leader>t :sil! Telescope<CR>
 set grepprg=rg\ --vimgrep\ --smart-case\ --follow\ --hidden
 nnoremap <silent> <Leader>f :RgFzf<CR>
 nnoremap <silent> <Leader>r :Rg<Cr>
@@ -511,6 +531,7 @@ nnoremap <silent> <Leader>H :Helptags<CR>
 nnoremap <silent> <Leader>hh :History<CR>
 nnoremap <silent> <Leader>h: :History:<CR>
 nnoremap <silent> <Leader>h/ :History/<CR>
+
 " status bar 
 lua << EOF
 local colors = {
@@ -579,7 +600,7 @@ set fileformat=unix
 " file tree
 lua require'nnn'.setup()
 nmap <F2> :NnnPicker<CR>
-
+nmap <F3> :NnnExplorer<CR>
 " Tabs 
 let mapleader = "\\" 
 nmap <leader>1 :bp<CR>
@@ -717,7 +738,7 @@ lua << EOF
 	elseif server.name == "html" then
 		local capabilities = vim.lsp.protocol.make_client_capabilities()
 		capabilities.textDocument.completion.completionItem.snippetSupport = true
-		opts = {capabilities=capabilities,on_attach = on_attach, cmd={"~/.local/share/nvim/lsp_servers/html/node_modules/vscode-langservers-extracted/bin/vscode-html-language-server", "--stdio"}}
+		opts = {capabilities=capabilities,on_attach = on_attach, cmd={ vim.env.HOME .. "/.local/share/nvim/lsp_servers/html/node_modules/vscode-langservers-extracted/bin/vscode-html-language-server", "--stdio"}}
 	-- This setup() function is exactly the same as lspconfig's setup function.
 	-- Refer to https://github.com/neovim/nvim-lspconfig/blob/master/ADVANCED_README.md
     end
@@ -842,8 +863,6 @@ cmp.setup({
     ['<C-p>'] = cmp.mapping.select_prev_item(),
     ['<C-n>'] = cmp.mapping.select_next_item(),
     -- Add tab support
-    ['<S-Tab>'] = cmp.mapping.select_prev_item(),
-    ['<Tab>'] = cmp.mapping.select_next_item(),
     ['<C-d>'] = cmp.mapping.scroll_docs(-4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
@@ -861,15 +880,6 @@ cmp.setup({
         fallback()
       end
     end,
-    ['<S-Tab>'] = function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>luasnip-jump-prev', true, true, true), '')
-      else
-        fallback()
-      end
-    end,
   },
 
   -- Installed sources
@@ -880,7 +890,8 @@ cmp.setup({
     -- { name = 'cmp_tabnine'  },
     { name = 'treesitter' },
     { name = 'nvim_lsp_signature_help' },
-    { name = 'luasnip' }
+    { name = 'luasnip' },
+    { name = 'neorg' }
   },
 })
 --   tabnine = require('cmp_tabnine.config')
@@ -1039,16 +1050,12 @@ _G.s_tab_complete = function()
         cmp.select_prev_item()
     elseif luasnip and luasnip.jumpable(-1) then
         return t("<Plug>luasnip-jump-prev")
-    else
-        return t "<S-Tab>"
     end
     return ""
 end
 
 vim.api.nvim_set_keymap("i", "<Tab>", "v:lua.tab_complete()", {expr = true})
 vim.api.nvim_set_keymap("s", "<Tab>", "v:lua.tab_complete()", {expr = true})
-vim.api.nvim_set_keymap("i", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
-vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
 vim.api.nvim_set_keymap("i", "<C-E>", "<Plug>luasnip-next-choice", {})
 vim.api.nvim_set_keymap("s", "<C-E>", "<Plug>luasnip-next-choice", {})
 EOF
@@ -1252,7 +1259,7 @@ require('dressing').setup({
     -- Options for telescope selector
     -- These are passed into the telescope picker directly. Can be used like:
     -- telescope = require('telescope.themes').get_ivy({...})
-    telescope = nil,
+    telescope = {},
 
     -- Options for fzf selector
     fzf = {
@@ -1320,3 +1327,28 @@ require('dressing').setup({
   },
 })
 EOF
+" ack.vim --- {{{
+
+" Use ripgrep for searching ⚡️
+" Options include:
+" --vimgrep -> Needed to parse the rg response properly for ack.vim
+" --type-not sql -> Avoid huge sql file dumps as it slows down the search
+" --smart-case -> Search case insensitive if all lowercase pattern, Search case sensitively otherwise
+let g:ackprg = 'rg --vimgrep --type-not sql --smart-case'
+
+" Auto close the Quickfix list after pressing '<enter>' on a list item
+let g:ack_autoclose = 1
+
+" Any empty ack search will search for the work the cursor is on
+let g:ack_use_cword_for_empty_search = 1
+
+" Don't jump to first match
+cnoreabbrev Ack Ack!
+
+" Maps <leader>/ so we're ready to type the search keyword
+nnoremap <Leader>/ :Ack!<Space>
+" }}}
+
+" Navigate quickfix list with ease
+nnoremap <silent> [q :cprevious<CR>
+nnoremap <silent> ]q :cnext<CR>
