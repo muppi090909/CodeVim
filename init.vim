@@ -93,15 +93,111 @@ Plug 'frazrepo/vim-rainbow'
 Plug 'luukvbaal/nnn.nvim'
 Plug 'chentau/marks.nvim'
 Plug 'tpope/vim-repeat'
+Plug 'DaeZak/crafttweaker-vim-highlighting'
+" Writer mode
+Plug 'folke/zen-mode.nvim'
+Plug 'junegunn/limelight.vim'
+Plug 'rhysd/vim-grammarous'
 " orgmode
-Plug 'jceb/vim-orgmode'
-Plug 'vim-scripts/utl.vim'
-Plug 'mattn/calendar-vim'
-"code runner
-Plug 'xianzhon/vim-code-runner'
+Plug 'nvim-neorg/neorg'
+" code runner
+Plug 'is0n/jaq-nvim'
 
 call plug#end()
 " Set completeopt to have a better completion experience
+" orgmode
+lua << EOF
+local parser_configs = require('nvim-treesitter.parsers').get_parser_configs()
+
+-- These two are optional and provide syntax highlighting
+-- for Neorg tables and the @document.meta tag
+parser_configs.norg_meta = {
+    install_info = {
+        url = "https://github.com/nvim-neorg/tree-sitter-norg-meta",
+        files = { "src/parser.c" },
+        branch = "main"
+    },
+}
+
+parser_configs.norg_table = {
+    install_info = {
+        url = "https://github.com/nvim-neorg/tree-sitter-norg-table",
+        files = { "src/parser.c" },
+        branch = "main"
+    },
+}
+EOF
+lua << EOF
+require'zen-mode'.setup {
+  window = {
+    backdrop = 0.95, -- shade the backdrop of the Zen window. Set to 1 to keep the same as Normal
+    -- height and width can be:
+    -- * an absolute number of cells when > 1
+    -- * a percentage of the width / height of the editor when <= 1
+    -- * a function that returns the width or the height
+    width = 120, -- width of the Zen window
+    height = 1, -- height of the Zen window
+    -- by default, no options are changed for the Zen window
+    -- uncomment any of the options below, or add other vim.wo options you want to apply
+    options = {
+      -- signcolumn = "no", -- disable signcolumn
+      -- number = false, -- disable number column
+      -- relativenumber = false, -- disable relative numbers
+      -- cursorline = false, -- disable cursorline
+      -- cursorcolumn = false, -- disable cursor column
+      -- foldcolumn = "0", -- disable fold column
+      -- list = false, -- disable whitespace characters
+    },
+  },
+  plugins = {
+    -- disable some global vim options (vim.o...)
+    -- comment the lines to not apply the options
+    options = {
+      enabled = true,
+      ruler = false, -- disables the ruler text in the cmd line area
+      showcmd = false, -- disables the command in the last line of the screen
+    },
+    twilight = { enabled = true }, -- enable to start Twilight when zen mode opens
+    gitsigns = { enabled = false }, -- disables git signs
+    tmux = { enabled = true }, -- disables the tmux statusline
+    -- this will change the font size on kitty when in zen mode
+    -- to make this work, you need to set the following kitty options:
+    -- - allow_remote_control socket-only
+    -- - listen_on unix:/tmp/kitty
+    kitty = {
+      enabled = true,
+      font = "+4", -- font size increment
+    },
+  },
+  -- callback where you can add custom code when the Zen window opens
+  on_open = function(win)
+  end,
+  -- callback where you can add custom code when the Zen window closes
+  on_close = function()
+  end,
+}
+EOF
+lua << EOF
+require('neorg').setup{
+    load = {
+        ["core.defaults"] = {},
+        ["core.norg.concealer"] = {},
+        ["core.norg.completion"] = {
+        config = {
+          engine = "nvim-cmp",
+          }},
+    ["core.keybinds"] = {
+    config = {
+        default_keybinds = true,
+        }},
+    ["core.norg.manoeuvre"] = {},
+    ["core.integrations.treesitter"] = {},
+    ["core.norg.qol.toc"] = {},
+}
+      }
+EOF
+nnoremap <leader>toc :Neorg toc split<CR>
+
 set guicursor=v-c-sm:block,n-i-ci-ve:ver25,r-cr-o:hor20
 command -nargs=+ LspHover lua vim.lsp.buf.hover()
 let &t_ut=''
@@ -299,8 +395,7 @@ require'nvim-treesitter.configs'.setup {
 EOF
 lua << EOF
 require'nvim-treesitter.configs'.setup {
-  -- One of "all", "maintained" (parsers with maintainers), or a list of languages
-  ensure_installed = "maintained",
+  ensure_installed = {"norg", "norg_meta", "norg_table"},
 
   -- Install languages synchronously (only applied to `ensure_installed`)
   sync_install = false,
@@ -439,14 +534,7 @@ au BufRead,BufNewFile *.lisp setfiletype lisp
 nohl
 set mouse=niv
 set nocompatible
-nmap <silent><leader>l <plug>CodeRunner
-let g:CodeRunnerCommandMap = {
-      \ 'python' : 'python3 $fileName',
-      \ 'rust' : 'cargo run',
-      \ 'lisp' : 'clisp $fileName',
-      \ 'asm' : 'nasm -f elf $fileName && ld -m elf_i386 -s -o $fileNameWithoutExt $fileNameWithoutExt.o && ./$fileNameWithoutExt && rm $fileNameWithoutExt',
-      \ 'lua' : 'lua $fileName',
-      \}
+nmap <leader>l :Jaq<CR>
 " Code navigation shortcuts
 nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
 nnoremap <silent> K     <cmd>lua vim.lsp.buf.hover()<CR>
@@ -757,7 +845,7 @@ lua << EOF
 
   floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
 
-  floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
+  floating_window_above_cur_line = false, -- try to place the floating above the current line when possible Note:
   -- will set to true when fully tested, set to false will use whichever side has more space
   -- this setting will be helpful if you do not want the PUM and floating win overlap
 
@@ -765,7 +853,7 @@ lua << EOF
   floating_window_off_y = 1, -- adjust float windows y position.
 
 
-  fix_pos = true,  -- set to true, the floating window will not auto-close until finish all parameters
+  fix_pos = false,  -- set to true, the floating window will not auto-close until finish all parameters
   hint_enable = true, -- virtual hint enable
   hint_prefix = "🐼 ",  -- Panda for parameter
   hint_scheme = "String",
@@ -779,7 +867,7 @@ lua << EOF
 
   always_trigger = false, -- sometime show signature on new line or in middle of parameter can be confusing, set it to false for #58
 
-  auto_close_after = nil, -- autoclose signature float win after x sec, disabled if nil.
+  auto_close_after = 2, -- autoclose signature float win after x sec, disabled if nil.
   extra_trigger_chars = {}, -- Array of extra characters that will trigger signature completion, e.g., 
   zindex = 200, -- by default it will be on top of all floating windows, set to <= 50 send it to bottom
 
@@ -1054,8 +1142,6 @@ _G.s_tab_complete = function()
     return ""
 end
 
-vim.api.nvim_set_keymap("i", "<Tab>", "v:lua.tab_complete()", {expr = true})
-vim.api.nvim_set_keymap("s", "<Tab>", "v:lua.tab_complete()", {expr = true})
 vim.api.nvim_set_keymap("i", "<C-E>", "<Plug>luasnip-next-choice", {})
 vim.api.nvim_set_keymap("s", "<C-E>", "<Plug>luasnip-next-choice", {})
 EOF
@@ -1352,3 +1438,88 @@ nnoremap <Leader>/ :Ack!<Space>
 " Navigate quickfix list with ease
 nnoremap <silent> [q :cprevious<CR>
 nnoremap <silent> ]q :cnext<CR>
+lua << EOF
+require('jaq-nvim').setup{
+    -- Commands used with 'Jaq'
+    cmds = {
+        -- Default UI used (see `Usage` for options)
+        default = "float",
+
+        -- Uses external commands such as 'g++' and 'cargo'
+        external = {
+            markdown = "glow %",
+            python = "python3 %",
+            rust = "cargo run",
+        },
+
+        -- Uses internal commands such as 'source' and 'luafile'
+        internal = {
+            lua = "luafile %",
+            vim = "source %"
+        }
+    },
+
+    -- UI settings
+    ui = {
+        -- Start in insert mode
+        startinsert = false,
+
+        -- Switch back to current file
+        -- after using Jaq
+        wincmd      = false,
+
+        -- Floating Window / FTerm settings
+        float = {
+            -- Floating window border (see ':h nvim_open_win')
+            border    = "none",
+
+            -- Num from `0 - 1` for measurements
+            height    = 0.8,
+            width     = 0.8,
+            x         = 0.5,
+            y         = 0.5,
+
+            -- Highlight group for floating window/border (see ':h winhl')
+            border_hl = "FloatBorder",
+            float_hl  = "Normal",
+
+            -- Floating Window Transparency (see ':h winblend')
+            blend     = 0
+        },
+
+        terminal = {
+            -- Position of terminal
+            position = "bot",
+
+            -- Open the terminal without line numbers
+            line_no = false,
+
+            -- Size of terminal
+            size     = 10
+        },
+
+        toggleterm = {
+            -- Position of terminal, one of "vertical" | "horizontal" | "window" | "float"
+            position = "horizontal",
+
+            -- Size of terminal
+            size     = 10
+        },
+
+        quickfix = {
+            -- Position of quickfix window
+            position = "bot",
+
+            -- Size of quickfix window
+            size     = 10
+        }
+    }
+}
+EOF
+function Write()
+    Limelight!! 0.5
+    ZenMode
+endfunction
+cnoreabbrev cg GrammarousCheck
+cnoreabbrev Write call Write()
+nnoremap <leader>z :ZenMode<CR>
