@@ -55,7 +55,7 @@ Plug 'David-Kunz/treesitter-unit'
 Plug 'nvim-treesitter/nvim-treesitter-refactor'
 Plug 'nvim-treesitter/playground'
 " status bar
-Plug 'akinsho/bufferline.nvim'
+Plug 'akinsho/bufferline.nvim', { 'tag': 'v2.*' }
 Plug 'nvim-lualine/lualine.nvim'
 Plug 'kyazdani42/nvim-web-devicons'
 
@@ -105,6 +105,7 @@ Plug 'is0n/jaq-nvim'
 
 call plug#end()
 " Set completeopt to have a better completion experience
+set termguicolors
 " orgmode
 lua << EOF
 local parser_configs = require('nvim-treesitter.parsers').get_parser_configs()
@@ -202,6 +203,46 @@ set guicursor=v-c-sm:block,n-i-ci-ve:ver25,r-cr-o:hor20
 command -nargs=+ LspHover lua vim.lsp.buf.hover()
 let &t_ut=''
 set keywordprg=:LspHover
+lua << EOF
+require("notify").setup({
+  -- Animation style (see below for details)
+  stages = "fade_in_slide_out",
+
+  -- Function called when a new window is opened, use for changing win settings/config
+  on_open = nil,
+
+  -- Function called when a window is closed
+  on_close = nil,
+
+  -- Render function for notifications. See notify-render()
+  render = "default",
+
+  -- Default timeout for notifications
+  timeout = 5000,
+
+  -- Max number of columns for messages
+  max_width = nil,
+  -- Max number of lines for a message
+  max_height = nil,
+
+  -- For stages that change opacity this is treated as the highlight behind the window
+  -- Set this to either a highlight group, an RGB hex value e.g. "#000000" or a function returning an RGB code for dynamic values
+  background_colour = "Normal",
+
+  -- Minimum width for notification windows
+  minimum_width = 50,
+
+  -- Icons for the different levels
+  icons = {
+    ERROR = "",
+    WARN = "",
+    INFO = "",
+    DEBUG = "",
+    TRACE = "✎",
+  },
+})
+vim.notify = require("notify")
+EOF
 lua require'bufferline'.setup{}
 lua << EOF
     require("lsp_lines").register_lsp_virtual_lines()
@@ -670,7 +711,6 @@ local config = {
 require('lualine').setup(config)
 EOF
 " misc
-set termguicolors
 lua require 'colorizer'.setup()
 let g:loaded_python_provider = 0
 let g:python3_host_prog  = '/usr/bin/python3'
@@ -968,6 +1008,33 @@ cmp.setup({
         fallback()
       end
     end,
+    ['<S-Tab>'] = function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.expand_or_jumpable() then
+        vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>luasnip-expand-or-jump', true, true, true), '')
+      else
+        fallback()
+      end
+    end,
+    ['<Up>'] = function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.expand_or_jumpable() then
+        vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>luasnip-expand-or-jump', true, true, true), '')
+      else
+        fallback()
+      end
+    end,
+    ['<Down>'] = function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>luasnip-expand-or-jump', true, true, true), '')
+      else
+        fallback()
+      end
+    end,
   },
 
   -- Installed sources
@@ -1144,46 +1211,6 @@ end
 
 vim.api.nvim_set_keymap("i", "<C-E>", "<Plug>luasnip-next-choice", {})
 vim.api.nvim_set_keymap("s", "<C-E>", "<Plug>luasnip-next-choice", {})
-EOF
-lua << EOF
-require("notify").setup({
-  -- Animation style (see below for details)
-  stages = "fade_in_slide_out",
-
-  -- Function called when a new window is opened, use for changing win settings/config
-  on_open = nil,
-
-  -- Function called when a window is closed
-  on_close = nil,
-
-  -- Render function for notifications. See notify-render()
-  render = "default",
-
-  -- Default timeout for notifications
-  timeout = 5000,
-
-  -- Max number of columns for messages
-  max_width = nil,
-  -- Max number of lines for a message
-  max_height = nil,
-
-  -- For stages that change opacity this is treated as the highlight behind the window
-  -- Set this to either a highlight group, an RGB hex value e.g. "#000000" or a function returning an RGB code for dynamic values
-  background_colour = "Normal",
-
-  -- Minimum width for notification windows
-  minimum_width = 50,
-
-  -- Icons for the different levels
-  icons = {
-    ERROR = "",
-    WARN = "",
-    INFO = "",
-    DEBUG = "",
-    TRACE = "✎",
-  },
-})
-vim.notify = require("notify")
 EOF
 lua << EOF
 vim.lsp.handlers['window/showMessage'] = function(_, result, ctx)
